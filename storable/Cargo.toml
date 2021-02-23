@@ -1,0 +1,42 @@
+[package]
+name = "storable"
+version = "0.1.0"
+authors = ["Andrea Nall <anall@andreanall.com>"]
+edition = "2018"
+
+# This crate has been written from scratch, but using the CPAN Storable
+# module Storable.xs for reference, as there is no other specification
+# for the binary Storable format.
+#
+# The Perl artistic license says:
+# 3. You may otherwise modify your copy of this Package in any way, provided
+# that you insert a prominent notice in each changed file stating how and
+# when you changed that file, and provided that you do at least ONE of the
+# following:
+# 
+# a) place your modifications in the Public Domain or otherwise make them
+# Freely Available, such as by posting said modifications to Usenet or an
+# equivalent medium, or placing the modifications on a major archive site
+# such as ftp.uu.net, or by allowing the Copyright Holder to include your
+# modifications in the Standard Version of the Package.
+#
+# c) rename any non-standard executables so the names do not conflict with
+# standard executables, which must also be provided, and provide a separate
+# manual page for each non-standard executable that clearly documents how it
+# differs from the Standard Version.
+#
+# ------------------------------------------------------------------------------
+#
+# I believe I am good using the below licenses (instead of same-as-Perl) given:
+#   It says I can modify the Package "in any way" provided I follow the terms.
+#   There are no files I _modified_ and therfore no places to insert notices.
+#   The below listed licenses count as "Freely Available."
+#   Neither this crate or the CPAN Storable module have executables (sans examples).
+#   There is no way a Rust crate can conflict with a CPAN module.
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-traits = "0.2"
+num-derive = "0.3"

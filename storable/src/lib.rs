@@ -17,13 +17,13 @@ mod tests;
 
 mod error;
 mod markers;
-mod perl_value;
+mod value;
 mod thaw_reader;
 mod thaw_settings;
 mod vstring;
 
 pub use crate::error::ThawError;
-pub use crate::perl_value::{FlagHashValue, Value, ValueRc};
+pub use crate::value::{FlagHashValue, Value, ValueRc};
 pub use crate::thaw_reader::ThawReader;
 pub use crate::thaw_settings::ThawSettings;
 pub use crate::vstring::VString;

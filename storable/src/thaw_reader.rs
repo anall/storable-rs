@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use crate::error::{InternalError, ThawError};
 use crate::markers::TypeMarkers;
-use crate::perl_value::{FlagHashValue, Value, ValueRc};
+use crate::value::{FlagHashValue, Value, ValueRc};
 use crate::thaw_settings::ThawSettings;
 use crate::{constants, vstring};
 
@@ -185,14 +185,15 @@ impl<
     }
 
     #[doc(hidden)]
-    fn scalar_or_bytes(&mut self, flagged: bool, buf: BT) -> Value<ST, BT> {
+    fn scalar_or_bytes(&mut self, flagged: bool, buf: BT) -> Result<Value<ST, BT>,ThawError> {
         if self.upgrade_unflagged_utf8 || flagged || self.reader.low_ascii_only(&buf) {
             match self.reader.bytes_from_utf8(buf) {
-                Ok(str) => Value::String(str),
-                Err(err) => Value::Bytes(err),
+                Ok(str) => Ok(Value::String(str,flagged)),
+                Err(err) if ! flagged => Ok(Value::Bytes(err)),
+                _  => Err(ThawError::InvalidUtf8),
             }
         } else {
-            Value::Bytes(buf)
+            Ok(Value::Bytes(buf))
         }
     }
 
@@ -526,7 +527,7 @@ impl<
         let rv_or_err = match marker {
             TypeMarkers::SxUndef | TypeMarkers::SxSvUndef => {
                 // TODO: If we ever care if Undef is immortal
-                let v = self.wrap_and_stash_ok(Value::Undef)?;
+                let v = self.wrap_and_stash_ok(Value::Undef(marker == TypeMarkers::SxSvUndef))?;
 
                 #[allow(clippy::option_if_let_else)]
                 if let Some(class) = cname.take() {
@@ -542,25 +543,25 @@ impl<
                 let length = self.reader.read_single_byte()?;
 
                 let buf = self.read_bytes(length as usize)?;
-                let rv = self.scalar_or_bytes(false, buf);
+                let rv = self.scalar_or_bytes(false, buf)?;
                 self.wrap_and_stash_ok(rv)
             }
             TypeMarkers::SxUtf8Str => {
                 let length = self.reader.read_single_byte()?;
 
                 let buf = self.read_bytes(length as usize)?;
-                let rv = self.scalar_or_bytes(true, buf);
+                let rv = self.scalar_or_bytes(true, buf)?;
                 self.wrap_and_stash_ok(rv)
             }
 
             TypeMarkers::SxLScalar => {
                 let buf = self.read_u32_and_bytes()?;
-                let rv = self.scalar_or_bytes(false, buf);
+                let rv = self.scalar_or_bytes(false, buf)?;
                 self.wrap_and_stash_ok(rv)
             }
             TypeMarkers::SxLUtf8Str => {
                 let buf = self.read_u32_and_bytes()?;
-                let rv = self.scalar_or_bytes(true, buf);
+                let rv = self.scalar_or_bytes(true, buf)?;
                 self.wrap_and_stash_ok(rv)
             }
 

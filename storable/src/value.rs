@@ -30,11 +30,8 @@ pub enum Value<
     /// Placeholder for internal use only, should never be seen in final results
     Dummy,
 
-    /// An undef value, which may or may not be the immortal undef (`PL_sv_undef`).
-    ///
-    /// Open a ticket if you need to specify which undef gets serialized or know which
-    /// gets deserialized.
-    Undef,
+    /// An undef value.
+    Undef(bool),
 
     /// The immortal `true` value (`PL_sv_yes`)
     Yes,
@@ -43,10 +40,12 @@ pub enum Value<
     /// A blessed value
     Blessed(ValueRc<ST, BT>, ST),
 
-    String(ST),
-    VString(vstring::VString<ST, BT>),
+    /// A perl string with valid UTF8 (which may or may not be flagged)
+    String(ST,bool),
+    /// A perl string with invalid UTF8 (possibly binary data)
     Bytes(BT),
     Array(Vec<ValueRc<ST, BT>>),
+    VString(vstring::VString<ST, BT>),
 
     Hash(HashMap<ST, ValueRc<ST, BT>>),
     FlagHash(HashMap<ST, FlagHashValue<ST, BT>>),
@@ -109,9 +108,9 @@ impl<
         self.simplify_with(|left| {
             other.simplify_with(|right| match (left, right) {
                 // Never add Dummy to this
-                (Undef, Undef) | (Yes, Yes) | (No, No) => true,
+                (Undef(_), Undef(_)) | (Yes, Yes) | (No, No) => true,
 
-                (String(a), String(b)) => a == b,
+                (String(a,_), String(b,_)) => a == b, // we don't care if the flag is the same
                 (Bytes(a), Bytes(b)) => a == b,
                 (Ref(a), Ref(b)) => a == b,
                 (Blessed(a, i), Blessed(b, j)) => a == b && i == j,
@@ -145,7 +144,7 @@ impl<
 
 #[cfg(test)]
 mod tests {
-    use crate::perl_value::Value;
+    use crate::value::Value;
     use std::rc::Rc;
 
     #[test]
@@ -168,10 +167,10 @@ mod tests {
     #[test]
     fn test_various_pv_variants() {
         let hello = "hello world".to_string();
-        let _ = Value::wrap(Value::<&str, &[u8]>::String(&hello));
+        let _ = Value::wrap(Value::<&str, &[u8]>::String(&hello,false));
         let _ = Value::wrap(Value::<&str, &[u8]>::Bytes(&[1]));
 
-        let _ = Value::wrap(Value::<String, Vec<u8>>::String(hello.clone()));
+        let _ = Value::wrap(Value::<String, Vec<u8>>::String(hello.clone(),false));
         let _ = Value::wrap(Value::<String, Vec<u8>>::Bytes(vec![1]));
     }
 }

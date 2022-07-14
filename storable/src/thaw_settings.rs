@@ -17,8 +17,9 @@ pub struct ThawSettings {
     pub(crate) downgrade_restricted_hashes: bool,
     pub(crate) strip_refs: bool,
 }
-impl Default for ThawSettings {
-    fn default() -> Self {
+impl ThawSettings {
+    #[must_use]
+    fn default() -> Self { // Not `Default::default` for visibility
         Self {
             with_magic: false,
 
@@ -38,8 +39,7 @@ impl Default for ThawSettings {
             strip_refs: false,
         }
     }
-}
-impl ThawSettings {
+
     #[must_use]
     pub fn with_magic() -> Self {
         Self {
@@ -120,7 +120,7 @@ impl ThawSettings {
 
     /// Adjust settings to downgrade restricted hashes to normal hashes
     #[must_use]
-    pub fn and_flatten_restricted_hashes(mut self) -> Self {
+    pub fn and_downgrade_restricted_hashes(mut self) -> Self {
         self.downgrade_restricted_hashes = true;
         self
     }

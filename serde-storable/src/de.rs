@@ -100,7 +100,7 @@ fn make_unexpected<
         Value::Yes => Unexpected::Other("immortal yes"),
         Value::No => Unexpected::Other("immortal no"),
         Value::Blessed(_, _) => Unexpected::Other("blessed value"),
-        Value::String(st,_) => Unexpected::Str(st.as_ref()),
+        Value::String(st, _) => Unexpected::Str(st.as_ref()),
         Value::VString(_) => Unexpected::Other("perl vstring"),
         Value::Bytes(bt) => Unexpected::Bytes(bt.as_ref()),
         Value::Array(_) => Unexpected::Seq,
@@ -478,7 +478,7 @@ impl<
         self.fix_error(match self.borrow_cur()?.deref() {
             Value::IV(v) => visitor.visit_i64(*v),
             Value::UV(v) => visitor.visit_u64(*v),
-            Value::String(v,_) => visitor.visit_i64(tri_code!(self, str::parse(v.as_ref()))?),
+            Value::String(v, _) => visitor.visit_i64(tri_code!(self, str::parse(v.as_ref()))?),
             Value::Yes => visitor.visit_i64(1),
             Value::No => visitor.visit_i64(0),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
@@ -551,7 +551,7 @@ impl<
         self.fix_error(match self.borrow_cur()?.deref() {
             Value::IV(v) => visitor.visit_i64(*v),
             Value::UV(v) => visitor.visit_u64(*v),
-            Value::String(v,_) => visitor.visit_f32(tri_code!(self, str::parse(v.as_ref()))?),
+            Value::String(v, _) => visitor.visit_f32(tri_code!(self, str::parse(v.as_ref()))?),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
         })
     }
@@ -563,7 +563,7 @@ impl<
         self.fix_error(match self.borrow_cur()?.deref() {
             Value::IV(v) => visitor.visit_i64(*v),
             Value::UV(v) => visitor.visit_u64(*v),
-            Value::String(v,_) => visitor.visit_f64(tri_code!(self, str::parse(v.as_ref()))?),
+            Value::String(v, _) => visitor.visit_f64(tri_code!(self, str::parse(v.as_ref()))?),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
         })
     }
@@ -580,7 +580,7 @@ impl<
         V: Visitor<'de>,
     {
         self.fix_error(match self.borrow_cur()?.deref() {
-            Value::String(v,_) => v.st_visit_str(visitor),
+            Value::String(v, _) => v.st_visit_str(visitor),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
         })
     }
@@ -592,7 +592,7 @@ impl<
         self.fix_error(match self.borrow_cur()?.deref() {
             Value::IV(v) => visitor.visit_i64(*v),
             Value::UV(v) => visitor.visit_u64(*v),
-            Value::String(v,_) => visitor.visit_string(v.as_ref().to_string()),
+            Value::String(v, _) => visitor.visit_string(v.as_ref().to_string()),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
         })
     }
@@ -604,7 +604,7 @@ impl<
         self.fix_error(match self.borrow_cur()?.deref() {
             Value::IV(v) => visitor.visit_i64(*v),
             Value::UV(v) => visitor.visit_u64(*v),
-            Value::String(v,_) => v.st_visit_bytes(visitor),
+            Value::String(v, _) => v.st_visit_bytes(visitor),
             Value::Bytes(v) => v.bt_visit_bytes(visitor),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
         })
@@ -617,7 +617,7 @@ impl<
         self.fix_error(match self.borrow_cur()?.deref() {
             Value::IV(v) => visitor.visit_i64(*v),
             Value::UV(v) => visitor.visit_u64(*v),
-            Value::String(v,_) => v.st_visit_bytes(visitor),
+            Value::String(v, _) => v.st_visit_bytes(visitor),
             Value::Bytes(v) => v.bt_visit_bytes(visitor),
             v => Err(de::Error::invalid_type(make_unexpected(v), &visitor)),
         })
@@ -631,7 +631,7 @@ impl<
             Value::Undef(_) => {
                 return self.fix_error(visitor.visit_none());
             }
-            Value::String(v,_) if v.eq_str("") || v.eq_str("0") => {
+            Value::String(v, _) if v.eq_str("") || v.eq_str("0") => {
                 return self.fix_error(visitor.visit_none());
             }
             Value::IV(v) if *v == 0 => {
@@ -770,7 +770,7 @@ pub fn from_bytes<'a, T: Deserialize<'a>>(data: &'a [u8]) -> error::Result<T> {
             data,
             &ThawSettings::without_magic()
                 .and_strip_refs()
-                .and_flatten_restricted_hashes(),
+                .and_downgrade_restricted_hashes(),
         )
         .expect("got error"),
         path: Rc::new(PathElement::Root),
@@ -799,7 +799,7 @@ mod tests {
         assert_eq!(from_bytes::<u64>(&[0x05, 0x0b, 0x08, 0x85]), Ok(5));
     }
 
-    #[derive(Deserialize, Debug)]
+    #[derive(Deserialize, Debug, Eq, PartialEq)]
     struct Triple {
         v: (u8, u16, u32),
     }
@@ -810,6 +810,6 @@ mod tests {
             0x81, 0x08, 0x82, 0x08, 0x83, 0x00, 0x00, 0x00, 0x01, 0x76,
         ];
         let v: Option<Triple> = from_bytes(&DATA).unwrap();
-        println!("{:?}", v);
+        assert_eq!(Some(Triple { v: (1, 2, 3) }), v);
     }
 }

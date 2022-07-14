@@ -28,15 +28,19 @@ fn wrap_iv<
 fn check_scalar_string<
     ST: AsRef<str> + PartialEq + Eq + Hash + Debug,
     BT: AsRef<[u8]> + PartialEq + Eq + Hash + Debug,
->(v : ValueRc<ST,BT>, str : &str, flagged: bool) -> () {
+>(
+    v: ValueRc<ST, BT>,
+    str: &str,
+    flagged: bool,
+) -> () {
     let iv = v.replace(Value::Dummy);
 
     match iv {
-        Value::String(v_str,v_flagged) => {
-            assert_eq!(str,v_str.as_ref());
-            assert_eq!(flagged,v_flagged);
-        },
-        v => panic!("got {:?} not String",v)
+        Value::String(v_str, v_flagged) => {
+            assert_eq!(str, v_str.as_ref());
+            assert_eq!(flagged, v_flagged);
+        }
+        v => panic!("got {:?} not String", v),
     };
 }
 
@@ -45,10 +49,10 @@ fn thaw_scalar() {
     static DATA: [u8; 7] = [0x05, 0x0b, 0x0a, 0x03, 0x66, 0x6f, 0x6f];
 
     let v = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic())
-            .map_err(|e| format!("{:?}", e))
-            .expect("got error");
+        .map_err(|e| format!("{:?}", e))
+        .expect("got error");
 
-    check_scalar_string(v,"foo",false);
+    check_scalar_string(v, "foo", false);
 }
 
 #[test]
@@ -56,10 +60,10 @@ fn thaw_scalar_io() {
     static DATA: [u8; 7] = [0x05, 0x0b, 0x0a, 0x03, 0x66, 0x6f, 0x6f];
 
     let v = crate::thaw_from_io(&mut Cursor::new(DATA), &ThawSettings::without_magic())
-            .map_err(|e| format!("{:?}", e))
-            .expect("got error");
+        .map_err(|e| format!("{:?}", e))
+        .expect("got error");
 
-    check_scalar_string(v,"foo",false);
+    check_scalar_string(v, "foo", false);
 }
 
 #[test]
@@ -73,12 +77,12 @@ fn thaw_unflagged_scalar() {
     );
 
     let v = crate::thaw_from_io(
-            &mut Cursor::new(DATA),
-            &ThawSettings::without_magic().and_upgrade_unflagged_utf8()
-        )
-        .expect("got error");
+        &mut Cursor::new(DATA),
+        &ThawSettings::without_magic().and_upgrade_unflagged_utf8(),
+    )
+    .expect("got error");
 
-    check_scalar_string(v,"æ",false);
+    check_scalar_string(v, "æ", false);
 }
 
 #[test]
@@ -91,12 +95,12 @@ fn thaw_unflagged_scalar_io() {
     );
 
     let v = crate::thaw_from_bytes(
-            &DATA,
-            &ThawSettings::without_magic().and_upgrade_unflagged_utf8()
-        )
-        .expect("got error");
+        &DATA,
+        &ThawSettings::without_magic().and_upgrade_unflagged_utf8(),
+    )
+    .expect("got error");
 
-    check_scalar_string(v,"æ",false);
+    check_scalar_string(v, "æ", false);
 }
 
 #[test]
@@ -105,8 +109,7 @@ fn thaw_flagged_scalar() {
 
     let v = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error");
 
-    check_scalar_string(v,"æ",true);
-
+    check_scalar_string(v, "æ", true);
 }
 
 #[test]
@@ -132,7 +135,7 @@ fn thaw_long_scalar() {
         0x31, 0x32, 0x33, 0x34, 0x31, 0x32, 0x33, 0x34,
     ];
 
-    let v = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic() ).expect("got error");
+    let v = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error");
 
     check_scalar_string(v,"1234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234123412341234",false);
 }
@@ -160,11 +163,9 @@ fn thaw_flagged_long_scalar() {
         0x65, 0x66, 0x64, 0x65, 0x61, 0x64, 0x62, 0x65, 0x65, 0x66,
     ];
 
-
-    let v = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic() ).expect("got error");
+    let v = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error");
 
     check_scalar_string(v,"ædeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",true);
-
 }
 
 #[test]
@@ -175,7 +176,7 @@ fn thaw_array() {
 
     assert_eq!(
         crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error"),
-        wrap(Value::Array(vec![wrap(Value::String("foo",false))]))
+        wrap(Value::Array(vec![wrap(Value::String("foo", false))]))
     );
 }
 
@@ -222,13 +223,13 @@ fn thaw_hash_unflagged_utf8_key() {
     let settings = ThawSettings::without_magic().and_with_byte_hashes();
     let result = crate::thaw_from_bytes(&DATA, &settings).expect("got error");
     let mut expected: HashMap<&[u8], ValueRc<&str, &[u8]>> = HashMap::new();
-    expected.insert(&[0xc3, 0xa6], wrap(Value::String("a",false)));
+    expected.insert(&[0xc3, 0xa6], wrap(Value::String("a", false)));
     assert_eq!(result, wrap(Value::HashByte(expected)));
 
     let settings = ThawSettings::without_magic().and_upgrade_unflagged_utf8();
     let result = crate::thaw_from_bytes(&DATA, &settings).expect("got error");
     let mut expected: HashMap<&str, ValueRc<&str, &[u8]>> = HashMap::new();
-    expected.insert("æ", wrap(Value::String("a",false)));
+    expected.insert("æ", wrap(Value::String("a", false)));
     assert_eq!(result, wrap(Value::Hash(expected)));
 }
 
@@ -250,13 +251,16 @@ fn thaw_hash_unflagged_utf8_key_io() {
     let settings = ThawSettings::without_magic().and_with_byte_hashes();
     let result = crate::thaw_from_io(&mut Cursor::new(DATA), &settings).expect("got error");
     let mut expected: HashMap<Vec<u8>, ValueRc<String, Vec<u8>>> = HashMap::new();
-    expected.insert(vec![0xc3, 0xa6], wrap(Value::String("a".to_string(),false)));
+    expected.insert(
+        vec![0xc3, 0xa6],
+        wrap(Value::String("a".to_string(), false)),
+    );
     assert_eq!(result, wrap(Value::HashByte(expected)));
 
     let settings = ThawSettings::without_magic().and_upgrade_unflagged_utf8();
     let result = crate::thaw_from_io(&mut Cursor::new(DATA), &settings).expect("got error");
     let mut expected: HashMap<String, ValueRc<String, Vec<u8>>> = HashMap::new();
-    expected.insert("æ".to_string(), wrap(Value::String("a".to_string(),false)));
+    expected.insert("æ".to_string(), wrap(Value::String("a".to_string(), false)));
     assert_eq!(result, wrap(Value::Hash(expected)));
 }
 
@@ -269,7 +273,7 @@ fn thaw_hash_flagged_utf8_key() {
 
     let result = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error");
     let mut expected: HashMap<&str, ValueRc<&str, &[u8]>> = HashMap::new();
-    expected.insert("æ", wrap(Value::String("a",false)));
+    expected.insert("æ", wrap(Value::String("a", false)));
     assert_eq!(result, wrap(Value::Hash(expected)));
 }
 
@@ -318,7 +322,7 @@ fn thaw_array_with_ref() {
     assert_eq!(
         crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error"),
         wrap(Value::Array(vec![wrap(Value::Ref(wrap(Value::String(
-            "foo",false
+            "foo", false
         ))))]))
     );
 }
@@ -330,7 +334,7 @@ fn thaw_array_with_double_ref() {
         0x00, 0x00, 0x00, 0x02,
     ];
 
-    let foo = wrap(Value::Ref(wrap(Value::String("foo",false))));
+    let foo = wrap(Value::Ref(wrap(Value::String("foo", false))));
     let res = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error");
     let res_b = res.borrow();
     let arr = if let Value::Array(arr) = &*res_b {
@@ -412,7 +416,10 @@ fn thaw_tied_scalar() {
     let result = crate::thaw_from_bytes(&DATA, &ThawSettings::without_magic()).expect("got error");
     assert_eq!(
         result,
-        wrap(Value::TiedScalar(wrap(Value::Undef(false)), "Tie::StdScalar"))
+        wrap(Value::TiedScalar(
+            wrap(Value::Undef(false)),
+            "Tie::StdScalar"
+        ))
     );
 }
 
@@ -477,7 +484,7 @@ fn thaw_tied_hash_key() {
         wrap(Value::TiedHashKey(
             wrap(Value::Hash(HashMap::new())),
             "Tie::StdHash",
-            wrap(Value::String("foo",false))
+            wrap(Value::String("foo", false))
         ))
     );
 }

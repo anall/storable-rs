@@ -17,15 +17,15 @@ mod tests;
 
 mod error;
 mod markers;
-mod value;
 mod thaw_reader;
 mod thaw_settings;
+mod value;
 mod vstring;
 
 pub use crate::error::ThawError;
-pub use crate::value::{FlagHashValue, Value, ValueRc};
 pub use crate::thaw_reader::ThawReader;
 pub use crate::thaw_settings::ThawSettings;
+pub use crate::value::{FlagHashValue, Value, ValueRc};
 pub use crate::vstring::VString;
 
 use std::io::{self, Read};

@@ -2,8 +2,8 @@ use std::hash::Hash;
 
 use crate::error::{InternalError, ThawError};
 use crate::markers::TypeMarkers;
-use crate::value::{FlagHashValue, Value, ValueRc};
 use crate::thaw_settings::ThawSettings;
+use crate::value::{FlagHashValue, Value, ValueRc};
 use crate::{constants, vstring};
 
 use std::collections::HashMap;
@@ -53,7 +53,7 @@ pub trait ThawReader<
     /// return a `st` or a clone of `st` depending on if `st` is owned.
     fn possibly_clone_st(st: &ST) -> ST;
 
-    /// convert a `ST` into a `BT`
+    /// convert an `ST` into a `BT`
     fn st_into_bt(st: ST) -> BT;
 
     /// check  if `BT` contains only low-ASCII (values under 0x80)
@@ -185,12 +185,12 @@ impl<
     }
 
     #[doc(hidden)]
-    fn scalar_or_bytes(&mut self, flagged: bool, buf: BT) -> Result<Value<ST, BT>,ThawError> {
+    fn scalar_or_bytes(&mut self, flagged: bool, buf: BT) -> Result<Value<ST, BT>, ThawError> {
         if self.upgrade_unflagged_utf8 || flagged || self.reader.low_ascii_only(&buf) {
             match self.reader.bytes_from_utf8(buf) {
-                Ok(str) => Ok(Value::String(str,flagged)),
-                Err(err) if ! flagged => Ok(Value::Bytes(err)),
-                _  => Err(ThawError::InvalidUtf8),
+                Ok(str) => Ok(Value::String(str, flagged)),
+                Err(err) if !flagged => Ok(Value::Bytes(err)),
+                Err(_) => Err(ThawError::InvalidUtf8),
             }
         } else {
             Ok(Value::Bytes(buf))

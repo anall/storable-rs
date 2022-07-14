@@ -11,6 +11,7 @@ use crate::vstring;
 pub type ValueRc<ST, BT> = Rc<RefCell<Value<ST, BT>>>;
 
 #[derive(Debug, PartialEq, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub enum FlagHashValue<
     ST: AsRef<str> + PartialEq + Eq + Hash + Debug,
     BT: AsRef<[u8]> + PartialEq + Eq + Hash + Debug,
@@ -30,37 +31,64 @@ pub enum Value<
     /// Placeholder for internal use only, should never be seen in final results
     Dummy,
 
-    /// An undef value.
+    /// An `undef` value, which may or may not be the immortal `undef` (specified by the `bool`)
     Undef(bool),
 
     /// The immortal `true` value (`PL_sv_yes`)
     Yes,
     /// The immortal `false` value (`PL_sv_no`)
     No,
-    /// A blessed value
+    /// A blessed value, storing both the internal value and the class
     Blessed(ValueRc<ST, BT>, ST),
 
-    /// A perl string with valid UTF8 (which may or may not be flagged)
-    String(ST,bool),
-    /// A perl string with invalid UTF8 (possibly binary data)
+    /// A string with valid UTF8 (which may or may not be flagged)
+    String(ST, bool),
+    /// A string with invalid UTF8 (possibly binary data)
     Bytes(BT),
+    /// An array
     Array(Vec<ValueRc<ST, BT>>),
+    /// A v-string (version string)
     VString(vstring::VString<ST, BT>),
 
+    /// A hash
     Hash(HashMap<ST, ValueRc<ST, BT>>),
+    /// A hash with flags on the hash values
     FlagHash(HashMap<ST, FlagHashValue<ST, BT>>),
 
-    // in case we have something with weird non-utf8 high-ascii keys
+    /// A hash with non-utf8 high-ascii hash keys
     HashByte(HashMap<BT, ValueRc<ST, BT>>),
+    /// A hash with non-utf8 high-ascii hash keys and with flags on the hash values
     FlagHashByte(HashMap<BT, FlagHashValue<ST, BT>>),
 
+    /// A ref to another `Value`
     Ref(ValueRc<ST, BT>),
+    /// A weak reference to another `Value`
     WeakRef(Weak<RefCell<Value<ST, BT>>>),
 
+    /// A tied scalar value, storing both the internal value and the tie class.
+    ///
+    /// This does not actually allow accessing the value through the tie without re-implementing the
+    /// Perl semantics.
     TiedScalar(ValueRc<ST, BT>, ST),
+    /// A tied array, storing both the internal value and the tie class.
+    ///
+    /// This does not actually allow accessing the value through the tie without re-implementing the
+    /// Perl semantics.
     TiedArray(ValueRc<ST, BT>, ST),
+    /// A tied array index access, storing the internal value, the tie class, and the index.
+    ///
+    /// This does not actually allow accessing the value through the tie without re-implementing the
+    /// Perl semantics.
     TiedArrayIdx(ValueRc<ST, BT>, ST, usize),
+    /// A tied hash, storing both the internal value and the tie class.
+    ///
+    /// This does not actually allow accessing the value through the tie without re-implementing the
+    /// Perl semantics.
     TiedHash(ValueRc<ST, BT>, ST),
+    /// A tied hash key access, storing the internal value, the tie class, and the key.
+    ///
+    /// This does not actually allow accessing the value through the tie without re-implementing the
+    /// Perl semantics.
     TiedHashKey(ValueRc<ST, BT>, ST, ValueRc<ST, BT>),
 
     /// Signed integer value.
@@ -69,7 +97,8 @@ pub enum Value<
     /// Unsigned integer value.
     ///
     /// This is currently inaccessible through the Storable bytestream but keeping for future
-    /// compatibility without breaking the API.
+    /// compatibility without breaking the API. This will currently be stored out as either a
+    /// signed value (if it fits) or a string.
     UV(u64),
 }
 impl<
@@ -110,7 +139,7 @@ impl<
                 // Never add Dummy to this
                 (Undef(_), Undef(_)) | (Yes, Yes) | (No, No) => true,
 
-                (String(a,_), String(b,_)) => a == b, // we don't care if the flag is the same
+                (String(a, _), String(b, _)) => a == b, // we don't care if the flag is the same
                 (Bytes(a), Bytes(b)) => a == b,
                 (Ref(a), Ref(b)) => a == b,
                 (Blessed(a, i), Blessed(b, j)) => a == b && i == j,
@@ -167,10 +196,10 @@ mod tests {
     #[test]
     fn test_various_pv_variants() {
         let hello = "hello world".to_string();
-        let _ = Value::wrap(Value::<&str, &[u8]>::String(&hello,false));
+        let _ = Value::wrap(Value::<&str, &[u8]>::String(&hello, false));
         let _ = Value::wrap(Value::<&str, &[u8]>::Bytes(&[1]));
 
-        let _ = Value::wrap(Value::<String, Vec<u8>>::String(hello.clone(),false));
+        let _ = Value::wrap(Value::<String, Vec<u8>>::String(hello.clone(), false));
         let _ = Value::wrap(Value::<String, Vec<u8>>::Bytes(vec![1]));
     }
 }

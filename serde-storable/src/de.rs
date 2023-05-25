@@ -110,6 +110,7 @@ fn make_unexpected<
         Value::FlagHashByte(_) => Unexpected::Other("restricted byte-keyed hash"),
         Value::Ref(_) => Unexpected::Other("ref"),
         Value::WeakRef(_) => Unexpected::Other("weak ref"),
+        Value::Overload(_) => Unexpected::Other("overloaded value"),
         Value::TiedScalar(_, _) => Unexpected::Other("tied scalar"),
         Value::TiedArray(_, _) => Unexpected::Other("tied array"),
         Value::TiedArrayIdx(_, _, _) => Unexpected::Other("tied array index"),

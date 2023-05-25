@@ -182,65 +182,65 @@ impl<
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Dummy => write!(f, "Dummy"),
-            Self::Undef(arg0) => f.debug_struct(&"Undef").field("immortal", arg0).finish(),
+            Self::Undef(immortal) => f.debug_struct(&"Undef").field("immortal", immortal).finish(),
             Self::Yes => write!(f, "Yes"),
             Self::No => write!(f, "No"),
-            Self::Blessed(arg0, arg1) => f
-                .debug_tuple(&format!("Blessed[{:?}]", arg1))
-                .field(&arg0.borrow())
+            Self::Blessed(val, class) => f
+                .debug_tuple(&format!("Blessed[{:?}]", class))
+                .field(&val.borrow())
                 .finish(),
-            Self::String(arg0, flagged) => {
+            Self::String(val, flagged) => {
                 if *flagged {
-                    write!(f, "String(utf8)[{:?}]", arg0)
+                    write!(f, "String(utf8)[{:?}]", val)
                 } else {
-                    write!(f, "String[{:?}]", arg0)
+                    write!(f, "String[{:?}]", val)
                 }
             }
-            Self::Bytes(arg0) => write!(f, "Bytes[{:?}]", arg0),
-            Self::Array(arg0) => {
+            Self::Bytes(val) => write!(f, "Bytes[{:?}]", val),
+            Self::Array(val) => {
                 let mut list = f.debug_list();
-                for v in arg0 {
+                for v in val {
                     list.entry(&v.borrow());
                 }
                 list.finish()
             }
-            Self::VString(arg0) => f.debug_tuple("VString").field(arg0).finish(),
+            Self::VString(val) => f.debug_tuple("VString").field(val).finish(),
             Self::Hash(arg0) => f.debug_tuple("Hash").field(arg0).finish(),
             Self::FlagHash(arg0) => f.debug_tuple("FlagHash").field(arg0).finish(),
             Self::HashByte(arg0) => f.debug_tuple("HashByte").field(arg0).finish(),
             Self::FlagHashByte(arg0) => f.debug_tuple("FlagHashByte").field(arg0).finish(),
-            Self::Ref(arg0) => f.debug_tuple("Ref").field(&arg0.borrow()).finish(),
+            Self::Ref(val) => f.debug_tuple("Ref").field(&val.borrow()).finish(),
             Self::WeakRef(arg0) => f.debug_tuple("WeakRef").field(arg0).finish(),
             Self::Overload(arg0) => f.debug_tuple("Overload").field(&arg0.borrow()).finish(),
-            Self::TiedScalar(arg0, arg1) => f
+            Self::TiedScalar(val, class) => f
                 .debug_tuple("TiedScalar")
-                .field(&arg0.borrow())
-                .field(arg1)
+                .field(&val.borrow())
+                .field(class)
                 .finish(),
-            Self::TiedArray(arg0, arg1) => f
+            Self::TiedArray(val, class) => f
                 .debug_tuple("TiedArray")
-                .field(&arg0.borrow())
-                .field(arg1)
+                .field(&val.borrow())
+                .field(class)
                 .finish(),
-            Self::TiedArrayIdx(arg0, arg1, arg2) => f
+            Self::TiedArrayIdx(val, class, idx) => f
                 .debug_tuple("TiedArrayIdx")
-                .field(&arg0.borrow())
-                .field(arg1)
-                .field(arg2)
+                .field(&val.borrow())
+                .field(class)
+                .field(idx)
                 .finish(),
-            Self::TiedHash(arg0, arg1) => f
+            Self::TiedHash(val, class) => f
                 .debug_tuple("TiedHash")
-                .field(&arg0.borrow())
-                .field(arg1)
+                .field(&val.borrow())
+                .field(class)
                 .finish(),
-            Self::TiedHashKey(arg0, arg1, arg2) => f
+            Self::TiedHashKey(val, class, key) => f
                 .debug_tuple("TiedHashKey")
-                .field(&arg0.borrow())
-                .field(arg1)
-                .field(arg2)
+                .field(&val.borrow())
+                .field(class)
+                .field(key)
                 .finish(),
-            Self::IV(arg0) => write!(f, "IV[{}]", arg0),
-            Self::UV(arg0) => write!(f, "UV[{}]", arg0),
+            Self::IV(val) => write!(f, "IV[{}]", val),
+            Self::UV(val) => write!(f, "UV[{}]", val),
         }
     }
 }

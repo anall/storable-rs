@@ -626,6 +626,16 @@ impl<
                 Ok(pv_result)
             }
 
+            TypeMarkers::SxOverload => {
+                let pv_result = Value::wrap(Value::Dummy);
+                self.stash(&pv_result);
+
+                let v = self.retrieve(None, false)?;
+
+                pv_result.replace(Value::Overload(v));
+                Ok(pv_result)
+            }
+
             TypeMarkers::SxObject => {
                 let tag = self.read_i32()?;
                 let v = self
@@ -789,7 +799,6 @@ impl<
 
             // These have not been supported yet (or can't get Perl to spit one out)
             TypeMarkers::SxHook => Err(ThawError::UnsupportedMarker("Hook")),
-            TypeMarkers::SxOverload => Err(ThawError::UnsupportedMarker("Overload")),
             TypeMarkers::SxWeakOverload => Err(ThawError::UnsupportedMarker("WeakOverload")),
         };
 

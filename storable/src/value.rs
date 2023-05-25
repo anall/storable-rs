@@ -21,7 +21,7 @@ pub enum FlagHashValue<
     Placeholder,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 #[allow(clippy::upper_case_acronyms)]
 /// An enum representing any possible `PerlValue`
 pub enum Value<
@@ -64,6 +64,9 @@ pub enum Value<
     Ref(ValueRc<ST, BT>),
     /// A weak reference to another `Value`
     WeakRef(Weak<RefCell<Value<ST, BT>>>),
+
+    /// A ref to another `Value`, with an overload involved
+    Overload(ValueRc<ST, BT>),
 
     /// A tied scalar value, storing both the internal value and the tie class.
     ///
@@ -168,6 +171,77 @@ impl<
                 _ => false,
             })
         })
+    }
+}
+
+impl<
+        ST: AsRef<str> + PartialEq + Eq + Hash + Debug,
+        BT: AsRef<[u8]> + PartialEq + Eq + Hash + Debug,
+    > Debug for Value<ST, BT>
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Dummy => write!(f, "Dummy"),
+            Self::Undef(arg0) => f.debug_struct(&"Undef").field("immortal", arg0).finish(),
+            Self::Yes => write!(f, "Yes"),
+            Self::No => write!(f, "No"),
+            Self::Blessed(arg0, arg1) => f
+                .debug_tuple(&format!("Blessed[{:?}]", arg1))
+                .field(&arg0.borrow())
+                .finish(),
+            Self::String(arg0, flagged) => {
+                if *flagged {
+                    write!(f, "String(utf8)[{:?}]", arg0)
+                } else {
+                    write!(f, "String[{:?}]", arg0)
+                }
+            }
+            Self::Bytes(arg0) => write!(f, "Bytes[{:?}]", arg0),
+            Self::Array(arg0) => {
+                let mut list = f.debug_list();
+                for v in arg0 {
+                    list.entry(&v.borrow());
+                }
+                list.finish()
+            }
+            Self::VString(arg0) => f.debug_tuple("VString").field(arg0).finish(),
+            Self::Hash(arg0) => f.debug_tuple("Hash").field(arg0).finish(),
+            Self::FlagHash(arg0) => f.debug_tuple("FlagHash").field(arg0).finish(),
+            Self::HashByte(arg0) => f.debug_tuple("HashByte").field(arg0).finish(),
+            Self::FlagHashByte(arg0) => f.debug_tuple("FlagHashByte").field(arg0).finish(),
+            Self::Ref(arg0) => f.debug_tuple("Ref").field(&arg0.borrow()).finish(),
+            Self::WeakRef(arg0) => f.debug_tuple("WeakRef").field(arg0).finish(),
+            Self::Overload(arg0) => f.debug_tuple("Overload").field(&arg0.borrow()).finish(),
+            Self::TiedScalar(arg0, arg1) => f
+                .debug_tuple("TiedScalar")
+                .field(&arg0.borrow())
+                .field(arg1)
+                .finish(),
+            Self::TiedArray(arg0, arg1) => f
+                .debug_tuple("TiedArray")
+                .field(&arg0.borrow())
+                .field(arg1)
+                .finish(),
+            Self::TiedArrayIdx(arg0, arg1, arg2) => f
+                .debug_tuple("TiedArrayIdx")
+                .field(&arg0.borrow())
+                .field(arg1)
+                .field(arg2)
+                .finish(),
+            Self::TiedHash(arg0, arg1) => f
+                .debug_tuple("TiedHash")
+                .field(&arg0.borrow())
+                .field(arg1)
+                .finish(),
+            Self::TiedHashKey(arg0, arg1, arg2) => f
+                .debug_tuple("TiedHashKey")
+                .field(&arg0.borrow())
+                .field(arg1)
+                .field(arg2)
+                .finish(),
+            Self::IV(arg0) => write!(f, "IV[{}]", arg0),
+            Self::UV(arg0) => write!(f, "UV[{}]", arg0),
+        }
     }
 }
 

@@ -19,7 +19,8 @@ pub struct ThawSettings {
 }
 impl ThawSettings {
     #[must_use]
-    fn default() -> Self { // Not `Default::default` for visibility
+    fn default() -> Self {
+        // Not `Default::default` for visibility
         Self {
             with_magic: false,
 
